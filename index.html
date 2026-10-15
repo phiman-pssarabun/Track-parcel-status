@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบติดตามสถานะฝากส่งทางไปรษณีย์ - PS-Sarabun</title>
+
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --primary: #1a5276;
+            --primary-hover: #154360;
+            --bg: #f8fafc;
+            --main-gradient: linear-gradient(135deg, #1a5276, #2980b9);
+        }
+
+        body, html {
+            min-height: 100%;
+            margin: 0; padding: 0;
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container-custom {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 15px;
+            padding-bottom: 40px;
+        }
+
+        .page-header {
+            background: white;
+            border-bottom: 4px solid var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--main-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 10px rgba(26, 82, 118, 0.2);
+        }
+
+        .header-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .header-text p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .btn-add {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(26, 82, 118, 0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-add:hover {
+            opacity: 0.95;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 14px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.15);
+        }
+
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .bg-pending { background-color: #fef3c7; color: #92400e; }
+        .bg-shipping { background-color: #dbeafe; color: #1e40af; }
+        .bg-success-custom { background-color: #d1fae5; color: #065f46; }
+        .bg-cancel { background-color: #fee2e2; color: #991b1b; }
+
+        .parcel-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border-left: 5px solid var(--primary);
+            transition: all 0.2s;
+        }
+
+        .parcel-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .parcel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .tracking-no {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .parcel-detail {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .parcel-detail i {
+            width: 18px;
+            color: var(--primary);
+        }
+
+        .parcel-actions {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action-sm {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .btn-action-status:hover { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .btn-action-edit:hover { background-color: #d97706; color: white; border-color: #d97706; }
+        .btn-action-delete:hover { background-color: #dc2626; color: white; border-color: #dc2626; }
+
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            overflow: hidden;
+        }
+        .modal-header {
+            background: var(--main-gradient);
+            color: white;
+            border: none;
+        }
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-custom">
+    <div class="page-header">
+        <div class="header-title">
+            <div class="header-icon"><i class="fas fa-box"></i></div>
+            <div class="header-text">
+                <h1>ติดตามสถานะฝากส่งทางไปรษณีย์</h1>
+                <p>ระบบสารบรรณอิเล็กทรอนิกส์ โรงเรียนพิมานพิทยาสรรค์</p>
+            </div>
+        </div>
+        <button class="btn-add" onclick="openAddModal()">
+            <i class="fas fa-plus"></i> เพิ่มรายการฝากส่งใหม่
+        </button>
+    </div>
+
+    <div class="filter-card">
+        <div class="row g-2">
+            <div class="col-md-7 col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-white text-muted border-end-0"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="ค้นหาเลขพัสดุ / ผู้รับ / ผู้ส่ง / ปลายทาง..." onkeyup="filterParcels()">
+                </div>
+            </div>
+            <div class="col-md-5 col-12">
+                <select id="statusFilter" class="form-select" onchange="filterParcels()">
+                    <option value="">-- สถานะทั้งหมด --</option>
+                    <option value="รับฝากแล้ว">รับฝากแล้ว</option>
+                    <option value="อยู่ระหว่างจัดส่ง">อยู่ระหว่างจัดส่ง</option>
+                    <option value="นำส่งสำเร็จ">นำส่งสำเร็จ</option>
+                    <option value="ยกเลิก">ยกเลิก</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="parcelList">
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-spinner fa-spin fa-2x mb-2" style="color: var(--primary);"></i>
+            <p>กำลังโหลดข้อมูล...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: เพิ่ม / แก้ไข -->
+<div class="modal fade" id="parcelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="modalTitle"><i class="fas fa-paper-plane me-2"></i>บันทึกฝากส่งใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="parcelForm" onsubmit="submitParcelForm(event)" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="editRowIndex" value="">
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">ชื่อผู้ฝากส่ง / กลุ่มสาระฯ <span class="text-danger">*</span></label>
+                        <input type="text" id="senderName" class="form-control" placeholder="ระบุชื่อผู้ส่ง หรือ งาน/กลุ่มสาระ">
+                        <div class="invalid-feedback">กรุณาระบุชื่อผู้ฝากส่งหรือกลุ่มสาระฯ</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">ชื่อผู้รับ / หน่วยงานปลายทาง <span class="text-danger">*</span></label>
+                        <input type="text" id="receiverName" class="form-control" placeholder="ระบุชื่อผู้รับหรือหน่วยงานปลายทาง">
+                        <div class="invalid-feedback">กรุณาระบุชื่อผู้รับหรือหน่วยงานปลายทาง</div>
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label font-weight-bold">บริษัทขนส่ง <span class="text-danger">*</span></label>
+                            <select id="courier" class="form-select">
+                                <option value="">-- เลือกขนส่ง --</option>
+                                <option value="ไปรษณีย์ไทย (EMS)">ไปรษณีย์ไทย (EMS)</option>
+                                <option value="ไปรษณีย์ไทย (ลงทะเบียน)">ไปรษณีย์ไทย (ลงทะเบียน)</option>
+                                <option value="Flash Express">Flash Express</option>
+                                <option value="Kerry Express">Kerry Express</option>
+                                <option value="J&T Express">J&T Express</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                            <div class="invalid-feedback">กรุณาเลือกบริษัทขนส่ง</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label font-weight-bold">เลข Tracking</label>
+                            <input type="text" id="trackingNo" class="form-control" placeholder="ถ้ายังไม่มีเว้นว่างได้">
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="statusSelectGroup" style="display: none;">
+                        <label class="form-label font-weight-bold">สถานะพัสดุ</label>
+                        <select id="parcelStatus" class="form-select">
+                            <option value="รับฝากแล้ว">รับฝากแล้ว</option>
+                            <option value="อยู่ระหว่างจัดส่ง">อยู่ระหว่างจัดส่ง</option>
+                            <option value="นำส่งสำเร็จ">นำส่งสำเร็จ</option>
+                            <option value="ยกเลิก">ยกเลิก</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">หมายเหตุ / รายละเอียดสิ่งของ</label>
+                        <textarea id="note" class="form-control" rows="2" placeholder="ระบุข้อมูลเพิ่มเติม (ถ้ามี)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary" style="background: var(--primary);" id="btnSubmitForm">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: อัปเดตสถานะด่วน -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fs-6"><i class="fas fa-sync-alt me-2"></i>อัปเดตสถานะพัสดุ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="updateStatusForm" onsubmit="submitQuickStatus(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="quickRowIndex">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">เลข Tracking</label>
+                        <input type="text" id="quickTrackingNo" class="form-control" placeholder="กรอกเลขติดตามพัสดุ">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">สถานะใหม่ <span class="text-danger">*</span></label>
+                        <select id="quickStatusSelect" class="form-select" required>
+                            <option value="รับฝากแล้ว">รับฝากแล้ว</option>
+                            <option value="อยู่ระหว่างจัดส่ง">อยู่ระหว่างจัดส่ง</option>
+                            <option value="นำส่งสำเร็จ">นำส่งสำเร็จ</option>
+                            <option value="ยกเลิก">ยกเลิก</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100" style="background: var(--primary);">บันทึกสถานะ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxStSyI_0uVb4s1K4X7G_M7g0KyQoKOATkdOzlS84EIayV3rF0N9zfYz22wcEgj8_1S/exec";
+
+    let allParcels = [];
+    let parcelModalObj, updateStatusModalObj;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        parcelModalObj = new bootstrap.Modal(document.getElementById('parcelModal'));
+        updateStatusModalObj = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+        fetchParcels();
+    });
+
+    function fetchParcels() {
+        fetch(`${GAS_URL}?action=getParcels`)
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    allParcels = response.data;
+                    renderParcels(allParcels);
+                } else {
+                    showError("ไม่สามารถดึงข้อมูลพัสดุได้");
+                }
+            })
+            .catch(() => showError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"));
+    }
+
+    function renderParcels(data) {
+        const container = document.getElementById("parcelList");
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5 text-muted bg-white rounded-3 shadow-sm">
+                    <i class="fas fa-box-open fa-3x mb-3 text-secondary"></i>
+                    <p class="mb-0">ยังไม่มีรายการฝากส่งพัสดุ</p>
+                </div>`;
+            return;
+        }
+
+        let html = "";
+        data.forEach((item) => {
+            let statusClass = "bg-pending";
+            if (item.status === "อยู่ระหว่างจัดส่ง") statusClass = "bg-shipping";
+            if (item.status === "นำส่งสำเร็จ") statusClass = "bg-success-custom";
+            if (item.status === "ยกเลิก") statusClass = "bg-cancel";
+
+            const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
+
+            html += `
+                <div class="parcel-card">
+                    <div class="parcel-header">
+                        <div>
+                            <span class="tracking-no"><i class="fas fa-barcode me-1"></i>${item.trackingNo || 'ยังไม่มีเลข Tracking'}</span>
+                            <div class="small text-muted mt-1"><i class="fas fa-truck me-1"></i>${item.courier}</div>
+                        </div>
+                        <span class="badge-status ${statusClass}">${item.status}</span>
+                    </div>
+                    <div class="parcel-detail"><i class="fas fa-user"></i><b>ผู้ฝากส่ง:</b> ${item.sender}</div>
+                    <div class="parcel-detail"><i class="fas fa-paper-plane"></i><b>ผู้รับ:</b> ${item.receiver}</div>
+                    <div class="parcel-detail"><i class="fas fa-calendar-alt"></i><b>วันที่ฝากส่ง:</b> ${item.date}</div>
+                    ${item.note ? `<div class="parcel-detail"><i class="fas fa-info-circle"></i><b>หมายเหตุ:</b> ${item.note}</div>` : ''}
+                    
+                    <div class="parcel-actions">
+                        <button class="btn-action-sm btn-action-status" onclick="openQuickStatusModal(${item.rowIndex}, '${item.status}', '${item.trackingNo}')">
+                            <i class="fas fa-sync-alt me-1"></i>สถานะ
+                        </button>
+                        <button class="btn-action-sm btn-action-edit" onclick='openEditModal(${itemJson})'>
+                            <i class="fas fa-edit me-1"></i>แก้ไข
+                        </button>
+                        <button class="btn-action-sm btn-action-delete" onclick="confirmDelete(${item.rowIndex}, '${item.id}')">
+                            <i class="fas fa-trash-alt me-1"></i>ลบ
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function filterParcels() {
+        const searchText = document.getElementById("searchInput").value.toLowerCase();
+        const statusVal = document.getElementById("statusFilter").value;
+
+        const filtered = allParcels.filter(item => {
+            const matchSearch = (
+                (item.trackingNo && item.trackingNo.toLowerCase().includes(searchText)) ||
+                (item.sender && item.sender.toLowerCase().includes(searchText)) ||
+                (item.receiver && item.receiver.toLowerCase().includes(searchText)) ||
+                (item.courier && item.courier.toLowerCase().includes(searchText))
+            );
+            const matchStatus = statusVal === "" || item.status === statusVal;
+            return matchSearch && matchStatus;
+        });
+
+        renderParcels(filtered);
+    }
+
+    function clearValidation() {
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    }
+
+    function openAddModal() {
+        clearValidation();
+        document.getElementById("editRowIndex").value = "";
+        document.getElementById("parcelForm").reset();
+        document.getElementById("modalTitle").innerHTML = `<i class="fas fa-paper-plane me-2"></i>บันทึกฝากส่งพัสดุใหม่`;
+        document.getElementById("statusSelectGroup").style.display = "none";
+        parcelModalObj.show();
+    }
+
+    function openEditModal(item) {
+        clearValidation();
+        document.getElementById("editRowIndex").value = item.rowIndex;
+        document.getElementById("senderName").value = item.sender || "";
+        document.getElementById("receiverName").value = item.receiver || "";
+        document.getElementById("courier").value = item.courier || "";
+        document.getElementById("trackingNo").value = (item.trackingNo === 'null' || !item.trackingNo) ? '' : item.trackingNo;
+        document.getElementById("parcelStatus").value = item.status || "รับฝากแล้ว";
+        document.getElementById("note").value = item.note || "";
+        
+        document.getElementById("modalTitle").innerHTML = `<i class="fas fa-edit me-2"></i>แก้ไขข้อมูลฝากส่งพัสดุ`;
+        document.getElementById("statusSelectGroup").style.display = "block";
+        parcelModalObj.show();
+    }
+
+    function validateForm() {
+        clearValidation();
+        let isValid = true;
+
+        const sender = document.getElementById("senderName");
+        if (!sender.value.trim()) {
+            sender.classList.add("is-invalid");
+            isValid = false;
+        }
+
+        const receiver = document.getElementById("receiverName");
+        if (!receiver.value.trim()) {
+            receiver.classList.add("is-invalid");
+            isValid = false;
+        }
+
+        const courier = document.getElementById("courier");
+        if (!courier.value) {
+            courier.classList.add("is-invalid");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function submitParcelForm(e) {
+        e.preventDefault();
+        if (!validateForm()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'กรอกข้อมูลไม่ครบถ้วน',
+                text: 'กรุณากรอกข้อมูลในช่องที่มีเครื่องหมาย * ให้ถูกต้อง',
+                confirmButtonColor: '#1a5276'
+            });
+            return;
+        }
+
+        const rowIndex = document.getElementById("editRowIndex").value;
+        const isEdit = rowIndex !== "";
+
+        Swal.fire({ 
+            title: isEdit ? 'กำลังบันทึกการแก้ไข...' : 'กำลังบันทึกข้อมูล...', 
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading() 
+        });
+
+        const payload = {
+            action: isEdit ? "editParcel" : "addParcel",
+            rowIndex: rowIndex,
+            sender: document.getElementById("senderName").value.trim(),
+            receiver: document.getElementById("receiverName").value.trim(),
+            courier: document.getElementById("courier").value,
+            trackingNo: document.getElementById("trackingNo").value.trim(),
+            status: isEdit ? document.getElementById("parcelStatus").value : "รับฝากแล้ว",
+            note: document.getElementById("note").value.trim()
+        };
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                parcelModalObj.hide();
+                Swal.fire({ icon: 'success', title: isEdit ? 'แก้ไขข้อมูลเรียบร้อย' : 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false });
+                fetchParcels();
+            } else {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถดำเนินรายการได้', 'error');
+            }
+        })
+        .catch(() => Swal.fire('ข้อผิดพลาด', 'เกิดปัญหาในการส่งข้อมูล', 'error'));
+    }
+
+    function openQuickStatusModal(rowIndex, currentStatus, currentTracking) {
+        document.getElementById("quickRowIndex").value = rowIndex;
+        document.getElementById("quickStatusSelect").value = currentStatus;
+        document.getElementById("quickTrackingNo").value = (currentTracking === 'null' || !currentTracking) ? '' : currentTracking;
+        updateStatusModalObj.show();
+    }
+
+    function submitQuickStatus(e) {
+        e.preventDefault();
+        Swal.fire({ title: 'กำลังอัปเดต...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const payload = {
+            action: "updateStatus",
+            rowIndex: document.getElementById("quickRowIndex").value,
+            status: document.getElementById("quickStatusSelect").value,
+            trackingNo: document.getElementById("quickTrackingNo").value.trim()
+        };
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                updateStatusModalObj.hide();
+                Swal.fire({ icon: 'success', title: 'อัปเดตสถานะสำเร็จ', timer: 1500, showConfirmButton: false });
+                fetchParcels();
+            } else {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถอัปเดตได้', 'error');
+            }
+        });
+    }
+
+    function confirmDelete(rowIndex, id) {
+        Swal.fire({
+            title: 'ยืนยันการลบรายการ?',
+            text: `คุณต้องการลบรายการพัสดุรหัส ${id} ใช่หรือไม่?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'ใช่, ลบเลย',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteParcel(rowIndex);
+            }
+        });
+    }
+
+    function deleteParcel(rowIndex) {
+        Swal.fire({ title: 'กำลังลบข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "deleteParcel", rowIndex: rowIndex })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === "success") {
+                Swal.fire({ icon: 'success', title: 'ลบรายการเรียบร้อย', timer: 1500, showConfirmButton: false });
+                fetchParcels();
+            } else {
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถลบรายการได้', 'error');
+            }
+        })
+        .catch(() => Swal.fire('ข้อผิดพลาด', 'เกิดปัญหาในการเชื่อมต่อ', 'error'));
+    }
+
+    function showError(msg) {
+        document.getElementById("parcelList").innerHTML = `<div class="alert alert-danger text-center">${msg}</div>`;
+    }
+</script>
+</body>
+</html>
