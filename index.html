@@ -28,11 +28,34 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* --- App Header: ล็อกมาตรฐาน Hub บนสุดนอก Container --- */
+        .app-header {
+            background: #ffffff;
+            text-align: center;
+            border-bottom: 4px solid var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1023px) {
+            .app-header { padding: 10px 10px 6px 10px; }
+            .school-logo { height: 40px; margin-bottom: 2px; }
+            .app-title { font-size: 1.2rem; line-height: 1.1; color: var(--primary); font-weight: 700; margin: 0; }
+            .app-subtitle { font-size: 0.75rem; margin-top: 2px; margin-bottom: 5px; font-weight: 600; color: #475569; }
+        }
+
+        @media (min-width: 1024px) {
+            .app-header { padding: 14px 20px 8px 20px; } 
+            .school-logo { height: 55px; margin-bottom: 5px; }
+            .app-title { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin: 0; }
+            .app-subtitle { font-size: 0.95rem; margin-top: 2px; margin-bottom: 5px; color: #475569; }
+        }
+
         .container-custom {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 15px;
-            padding-bottom: 40px;
+            padding: 0 15px 40px 15px;
         }
 
         .page-header {
@@ -212,9 +235,51 @@
         .modal-header .btn-close {
             filter: brightness(0) invert(1);
         }
+
+        /* Pagination Styling */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 14px;
+            margin-top: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pagination-info {
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 2px;
+            color: var(--primary);
+            font-size: 0.82rem;
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body>
+
+<!-- ส่วนหัวมาตรฐาน Hub -->
+<header class="app-header">
+    <img src="https://raw.githubusercontent.com/joodami/school-assets/main/logo.png" alt="Logo" class="school-logo">
+    <h1 class="app-title">PS-Sarabun</h1>
+    <p class="app-subtitle">ระบบสารบรรณอิเล็กทรอนิกส์ โรงเรียนพิมานพิทยาสรรค์</p>
+</header>
 
 <div class="container-custom">
     <div class="page-header">
@@ -222,7 +287,7 @@
             <div class="header-icon"><i class="fas fa-box"></i></div>
             <div class="header-text">
                 <h1>ติดตามสถานะฝากส่งทางไปรษณีย์</h1>
-                <p>ระบบสารบรรณอิเล็กทรอนิกส์ โรงเรียนพิมานพิทยาสรรค์</p>
+                <p>โรงเรียนพิมานพิทยาสรรค์</p>
             </div>
         </div>
         <button class="btn-add" onclick="openAddModal()">
@@ -250,11 +315,20 @@
         </div>
     </div>
 
+    <!-- ส่วนแสดงรายการพัสดุ -->
     <div id="parcelList">
         <div class="text-center py-5 text-muted">
             <i class="fas fa-spinner fa-spin fa-2x mb-2" style="color: var(--primary);"></i>
             <p>กำลังโหลดข้อมูล...</p>
         </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="parcelPagination" class="pagination-container d-none">
+        <div id="parcelPaginationInfo" class="pagination-info">แสดงรายการ 1 - 15 จากทั้งหมด 0 รายการ</div>
+        <nav>
+            <ul id="parcelPaginationNav" class="pagination pagination-sm mb-0"></ul>
+        </nav>
     </div>
 </div>
 
@@ -363,7 +437,12 @@
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxStSyI_0uVb4s1K4X7G_M7g0KyQoKOATkdOzlS84EIayV3rF0N9zfYz22wcEgj8_1S/exec";
 
+    const PAGE_SIZE = 15; // แสดงผล 15 รายการต่อหน้า
+
     let allParcels = [];
+    let filteredParcels = [];
+    let currentPage = 1;
+
     let parcelModalObj, updateStatusModalObj;
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -378,7 +457,7 @@
             .then(response => {
                 if(response.status === "success") {
                     allParcels = response.data;
-                    renderParcels(allParcels);
+                    filterParcels();
                 } else {
                     showError("ไม่สามารถดึงข้อมูลพัสดุได้");
                 }
@@ -386,19 +465,51 @@
             .catch(() => showError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"));
     }
 
-    function renderParcels(data) {
+    function filterParcels() {
+        const searchText = document.getElementById("searchInput").value.toLowerCase();
+        const statusVal = document.getElementById("statusFilter").value;
+
+        filteredParcels = allParcels.filter(item => {
+            const matchSearch = (
+                (item.trackingNo && item.trackingNo.toLowerCase().includes(searchText)) ||
+                (item.sender && item.sender.toLowerCase().includes(searchText)) ||
+                (item.receiver && item.receiver.toLowerCase().includes(searchText)) ||
+                (item.courier && item.courier.toLowerCase().includes(searchText))
+            );
+            const matchStatus = statusVal === "" || item.status === statusVal;
+            return matchSearch && matchStatus;
+        });
+
+        currentPage = 1;
+        renderPage();
+    }
+
+    function renderPage() {
         const container = document.getElementById("parcelList");
-        if (!data || data.length === 0) {
+        const paginationContainer = document.getElementById("parcelPagination");
+
+        if (!filteredParcels || filteredParcels.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-5 text-muted bg-white rounded-3 shadow-sm">
                     <i class="fas fa-box-open fa-3x mb-3 text-secondary"></i>
                     <p class="mb-0">ยังไม่มีรายการฝากส่งพัสดุ</p>
                 </div>`;
+            paginationContainer.classList.add('d-none');
             return;
         }
 
+        const totalItems = filteredParcels.length;
+        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        const startIdx = (currentPage - 1) * PAGE_SIZE;
+        const endIdx = Math.min(startIdx + PAGE_SIZE, totalItems);
+        const pageItems = filteredParcels.slice(startIdx, endIdx);
+
         let html = "";
-        data.forEach((item) => {
+        pageItems.forEach((item) => {
             let statusClass = "bg-pending";
             if (item.status === "อยู่ระหว่างจัดส่ง") statusClass = "bg-shipping";
             if (item.status === "นำส่งสำเร็จ") statusClass = "bg-success-custom";
@@ -435,24 +546,27 @@
             `;
         });
         container.innerHTML = html;
+
+        // Render Pagination Control
+        if (totalPages > 1) {
+            paginationContainer.classList.remove('d-none');
+            document.getElementById('parcelPaginationInfo').innerText = `แสดงรายการ ${startIdx + 1} - ${endIdx} จากทั้งหมด ${totalItems} รายการ`;
+            
+            let navHtml = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">ก่อนหน้า</a></li>`;
+            for (let i = 1; i <= totalPages; i++) {
+                navHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>`;
+            }
+            navHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">ถัดไป</a></li>`;
+            
+            document.getElementById('parcelPaginationNav').innerHTML = navHtml;
+        } else {
+            paginationContainer.classList.add('d-none');
+        }
     }
 
-    function filterParcels() {
-        const searchText = document.getElementById("searchInput").value.toLowerCase();
-        const statusVal = document.getElementById("statusFilter").value;
-
-        const filtered = allParcels.filter(item => {
-            const matchSearch = (
-                (item.trackingNo && item.trackingNo.toLowerCase().includes(searchText)) ||
-                (item.sender && item.sender.toLowerCase().includes(searchText)) ||
-                (item.receiver && item.receiver.toLowerCase().includes(searchText)) ||
-                (item.courier && item.courier.toLowerCase().includes(searchText))
-            );
-            const matchStatus = statusVal === "" || item.status === statusVal;
-            return matchSearch && matchStatus;
-        });
-
-        renderParcels(filtered);
+    function changePage(page) {
+        currentPage = page;
+        renderPage();
     }
 
     function clearValidation() {
